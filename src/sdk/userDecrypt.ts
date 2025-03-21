@@ -94,8 +94,11 @@ export const userDecryptRequest =
           contractAddress: h.contractAddress,
         };
       }),
-      requestValidity: { startTimestamp, durationDays },
-      contractsChainId: chainId,
+      requestValidity: {
+        startTimestamp: startTimestamp.toString(), // Convert to string
+        durationDays: durationDays.toString(), // Convert to string
+      },
+      contractsChainId: chainId.toString(), // Convert to string
       contractAddresses: contractAddresses.map((c) => getAddress(c)),
       userAddress: getAddress(userAddress),
       signature: signature.replace(/^(0x)/, ''),
@@ -116,6 +119,7 @@ export const userDecryptRequest =
     } catch (e) {
       throw new Error('Invalid public or private key', { cause: e });
     }
+    console.log(options);
 
     let response;
     let json;

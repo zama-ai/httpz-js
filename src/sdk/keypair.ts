@@ -16,10 +16,7 @@ export type EIP712 = {
     verifyingContract: string;
     version: string;
   };
-  message: {
-    publicKey: string;
-    delegatedAccount?: string;
-  };
+  message: any;
   primaryType: string;
   types: {
     [key: string]: EIP712Type[];
@@ -74,6 +71,81 @@ export const createEIP712 =
     }
     return msgParams;
   };
+
+/**
+ * Creates an EIP712 structure specifically for user decrypt requests
+ *
+ * @param gatewayChainId The chain ID of the gateway
+ * @param verifyingContract The address of the contract that will verify the signature
+ * @param publicKey The user's public key as a hex string or Uint8Array
+ * @param contractAddresses Array of contract addresses that can access the decryption
+ * @param contractsChainId The chain ID where the contracts are deployed
+ * @param startTimestamp The timestamp when the decryption permission becomes valid
+ * @param durationDays How many days the decryption permission remains valid
+ * @returns EIP712 typed data structure for user decryption
+ */
+export const createEIP712UserDecrypt = (
+  gatewayChainId: number,
+  verifyingContract: string,
+  publicKey: string | Uint8Array,
+  contractAddresses: string[],
+  contractsChainId: string | number,
+  startTimestamp: bigint | string,
+  durationDays: bigint | string,
+): EIP712 => {
+  if (!isAddress(verifyingContract)) {
+    throw new Error('Invalid verifying contract address.');
+  }
+
+  // Format the public key based on its type
+  const formattedPublicKey =
+    typeof publicKey === 'string'
+      ? publicKey.startsWith('0x')
+        ? publicKey
+        : `0x${publicKey}`
+      : publicKey;
+
+  // Convert timestamps to strings if they're bigints
+  const formattedStartTimestamp =
+    typeof startTimestamp === 'bigint'
+      ? startTimestamp.toString()
+      : startTimestamp;
+
+  const formattedDurationDays =
+    typeof durationDays === 'bigint' ? durationDays.toString() : durationDays;
+
+  return {
+    types: {
+      EIP712Domain: [
+        { name: 'name', type: 'string' },
+        { name: 'version', type: 'string' },
+        { name: 'chainId', type: 'uint256' },
+        { name: 'verifyingContract', type: 'address' },
+      ],
+      UserDecryptRequestVerification: [
+        { name: 'publicKey', type: 'bytes' },
+        { name: 'contractAddresses', type: 'address[]' },
+        { name: 'contractsChainId', type: 'uint256' },
+        { name: 'startTimestamp', type: 'uint256' },
+        { name: 'durationDays', type: 'uint256' },
+      ],
+    },
+    primaryType: 'EIP712UserDecryptRequest',
+    domain: {
+      name: 'DecryptionManager',
+      version: '1',
+      chainId: gatewayChainId,
+      verifyingContract,
+    },
+    message: {
+      publicKey: formattedPublicKey,
+      contractAddresses,
+      contractsChainId,
+      startTimestamp: formattedStartTimestamp,
+      durationDays: formattedDurationDays,
+    },
+  };
+};
 
 export const generateKeypair = () => {
   const keypair = cryptobox_keygen();
