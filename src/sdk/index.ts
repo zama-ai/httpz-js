@@ -17,6 +17,9 @@ import { createEncryptedInput } from './encrypt';
 import { generateKeypair, createEIP712, EIP712 } from './keypair';
 import { CtHandleContractPair, userDecryptRequest } from './userDecrypt';
 import { publicDecryptRequest } from './publicDecrypt';
+// import fetchRetry from 'fetch-retry';
+
+// global.fetch = fetchRetry(global.fetch, { retries: 5, retryDelay: 500 });
 
 export type HTTPZInstance = {
   createEncryptedInput: (
@@ -62,7 +65,7 @@ export const createInstance = async (
     throw new Error('ACL contract address is not valid or empty');
   }
 
-  if (publicKey && !(publicKey instanceof Uint8Array))
+  if (publicKey && !(publicKey.data instanceof Uint8Array))
     throw new Error('publicKey must be a Uint8Array');
 
   const provider = getProvider(config);

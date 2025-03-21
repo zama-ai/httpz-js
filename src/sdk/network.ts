@@ -79,6 +79,7 @@ export const getKeysFromRelayer = async (
           `HTTP error! status: ${publicKeyResponse.status} on ${publicKeyResponse.url}`,
         );
       }
+
       const publicKey = await publicKeyResponse.bytes();
 
       const publicParamsUrl = data.response.crs['2048'].urls[0];

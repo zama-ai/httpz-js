@@ -20,17 +20,18 @@ export type HTTPZInstanceConfig = {
   kmsContractAddress: string;
   aclContractAddress: string;
   chainId?: number;
-  publicKey?: Uint8Array | null;
-  publicKeyId?: string | null;
   relayerUrl?: string;
-  network?: Eip1193Provider;
-  networkUrl?: string;
+  network?: Eip1193Provider | string;
   publicParams?: PublicParams<Uint8Array> | null;
+  publicKey?: {
+    data: Uint8Array | null;
+    id: string | null;
+  };
 };
 
 export const getProvider = (config: HTTPZInstanceConfig) => {
-  if (config.networkUrl) {
-    return new JsonRpcProvider(config.networkUrl);
+  if (typeof config.network === 'string') {
+    return new JsonRpcProvider(config.network);
   } else if (config.network) {
     return new BrowserProvider(config.network);
   }
@@ -57,20 +58,17 @@ export const getTfheCompactPublicKey = async (
   config: HTTPZInstanceConfig,
 ): Promise<{ publicKey: TfheCompactPublicKey; publicKeyId: string }> => {
   if (config.relayerUrl && !config.publicKey) {
-    const inputs = await getKeysFromRelayer(
-      cleanURL(config.relayerUrl),
-      config.publicKeyId,
-    );
+    const inputs = await getKeysFromRelayer(cleanURL(config.relayerUrl));
     return { publicKey: inputs.publicKey, publicKeyId: inputs.publicKeyId };
-  } else if (config.publicKey && config.publicKeyId) {
-    const buff = config.publicKey;
+  } else if (config.publicKey && config.publicKey.data && config.publicKey.id) {
+    const buff = config.publicKey.data;
     try {
       return {
         publicKey: TfheCompactPublicKey.safe_deserialize(
           buff,
           SERIALIZED_SIZE_LIMIT_PK,
         ),
-        publicKeyId: config.publicKeyId,
+        publicKeyId: config.publicKey.id,
       };
     } catch (e) {
       throw new Error('Invalid public key (deserialization failed)', {
@@ -86,10 +84,7 @@ export const getPublicParams = async (
   config: HTTPZInstanceConfig,
 ): Promise<PublicParams> => {
   if (config.relayerUrl && !config.publicParams) {
-    const inputs = await getKeysFromRelayer(
-      cleanURL(config.relayerUrl),
-      config.publicKeyId,
-    );
+    const inputs = await getKeysFromRelayer(cleanURL(config.relayerUrl));
     return inputs.publicParams;
   } else if (config.publicParams && config.publicParams['2048']) {
     const buff = config.publicParams['2048'].publicParams;
