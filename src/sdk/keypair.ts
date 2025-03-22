@@ -18,6 +18,10 @@ export type EIP712 = {
   };
   message: {
     publicKey: string;
+    contractAddresses: string[];
+    contractsChainId: number;
+    startTimestamp: string;
+    durationDays: number;
     delegatedAccount?: string;
   };
   primaryType: string;
@@ -28,7 +32,15 @@ export type EIP712 = {
 
 export const createEIP712 =
   (chainId: number) =>
-  (publicKey: string, verifyingContract: string, delegatedAccount?: string) => {
+  (
+    publicKey: string,
+    verifyingContract: string,
+    contractAddresses: string[],
+    contractsChainId: number,
+    startTimestamp: string,
+    durationDays: number,
+    delegatedAccount?: string,
+  ) => {
     if (!isAddress(verifyingContract))
       throw new Error('Invalid contract address.');
     if (delegatedAccount && !isAddress(delegatedAccount))
@@ -43,25 +55,35 @@ export const createEIP712 =
           { name: 'verifyingContract', type: 'address' },
         ],
         // Refer to primaryType.
-        Reencrypt: [{ name: 'publicKey', type: 'bytes' }],
+        UserDecryptRequestVerification: [
+          { name: 'publicKey', type: 'bytes' },
+          { name: 'contractAddresses', type: 'address[]' },
+          { name: 'contractsChainId', type: 'uint256' },
+          { name: 'startTimestamp', type: 'uint256' },
+          { name: 'durationDays', type: 'uint256' },
+        ],
       },
       // This defines the message you're proposing the user to sign, is dapp-specific, and contains
       // anything you want. There are no required fields. Be as explicit as possible when building out
       // the message schema.
       // This refers to the keys of the following types object.
-      primaryType: 'Reencrypt',
+      primaryType: 'UserDecryptRequestVerification',
       domain: {
         // Give a user-friendly name to the specific contract you're signing for.
-        name: 'Authorization token',
+        name: 'DecryptionManager',
         // This identifies the latest version.
         version: '1',
         // This defines the network, in this case, Mainnet.
-        chainId,
+        chainId: 654321,
         // // Add a verifying contract to make sure you're establishing contracts with the proper entity.
         verifyingContract,
       },
       message: {
-        publicKey: `0x${publicKey}`,
+        publicKey: publicKey,
+        contractAddresses: contractAddresses,
+        contractsChainId: 123456,
+        startTimestamp: startTimestamp,
+        durationDays: durationDays,
       },
     };
 
